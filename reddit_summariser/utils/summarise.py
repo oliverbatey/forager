@@ -1,11 +1,13 @@
 from openai import OpenAI
+import jsonschema
+from utils.json_schemas import LLMConfigSchema
 
 
 class Summariser:
     def __init__(self):
         self.client = OpenAI()
 
-    def summarise(self, text, prompt_template, max_tokens):
+    def summarise(self, text: str, llm_config: dict) -> str:
         """
         Summarise the given text using the OpenAI API.
 
@@ -17,16 +19,15 @@ class Summariser:
         Returns:
         - summary (str): The summarised text.
         """
-
+        jsonschema.validate(llm_config, LLMConfigSchema.schema)
         response = self.client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=llm_config["model"],
             messages=[
-                {"role": "system", "content": f"{prompt_template}"},
+                {"role": "system", "content": f"{llm_config['system_message']}"},
                 {"role": "user", "content": f"{text}"},
             ],
-            temperature=0.0,
-            max_tokens=max_tokens,
-            top_p=1,
+            temperature=llm_config["temperature"],
+            max_tokens=llm_config["max_tokens"],
+            top_p=llm_config["top_p"],
         )
-        summary = response.choices[0].message.content.strip()
-        return summary
+        return response.choices[0].message.content.strip()

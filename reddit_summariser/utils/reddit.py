@@ -127,14 +127,12 @@ class RedditThread:
     def _thread_content(self):
         self.thread_content = str(self)
 
-    def summarise(self, prompt_template, max_tokens):
+    def summarise(self, llm_config: dict):
         self._thread_content()
         if self.thread_content:
-            self.summary = Summariser().summarise(
-                self.thread_content, prompt_template, max_tokens
-            )
+            self.summary = Summariser().summarise(self.thread_content, llm_config)
         else:
-            raise Exception
+            raise ValueError("Thread content is empty, nothing to summarise.")
 
     @classmethod
     def from_json(cls, file_path):

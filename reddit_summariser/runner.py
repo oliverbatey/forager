@@ -11,7 +11,9 @@ def parse_args():
         "-s",
         "--subreddit",
         default="deliveroos",
-        help=("Name of the subreddit to extract data from. Default is 'r/deliveroos'."),
+        help=(
+            "Name of the subreddit to the extract data from. Default is 'r/deliveroos'."
+        ),
     )
     parser_extract.add_argument(
         "--limit",
@@ -22,23 +24,22 @@ def parse_args():
         "-o",
         "--output_directory",
         default="extract_output",
-        help=("Directory in which to save  Reddit threads as json files."),
+        help=("Directory that the extract steps saves Reddit content to."),
     )
 
     parser_summarise = subparsers.add_parser("summarise")
     parser_summarise.add_argument(
         "-i",
-        "--input-directory",
+        "--input_directory",
         default="extract_output",
-        help=("Directory containing documents to summarise."),
+        help=("Directory that the summarise step loads files from."),
     )
     parser_summarise.add_argument(
         "-o",
-        "--output-directory",
+        "--output_directory",
         default="summarise_output",
-        help=("Directory to output summary to."),
+        help=("Directory that the summarise step saves files to."),
     )
-
     return parser.parse_args()
 
 

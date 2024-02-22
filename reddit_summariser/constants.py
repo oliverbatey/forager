@@ -2,27 +2,41 @@ import os
 
 
 class RedditAuthenticationTokens:
+    """The authentication tokens for the Reddit API."""
+
     CLIENT_ID = os.environ.get("REDDIT_CLIENT_ID")
     CLIENT_SECRET = os.environ.get("REDDIT_CLIENT_SECRET")
 
 
-class Summarise:
-    LLM_CONFIGS = {
-        "gpt-3.5-turbo": {
-            "model": "gpt-3.5-turbo",
-            "temperature": 0.0,
-            "top_p": 1,
-        }
+class BaseSummaryConfig:
+    """The base configuration for the LLM summariser."""
+
+    config = {
+        "model": "gpt-3.5-turbo",
+        "temperature": 0.0,
+        "top_p": 1,
     }
-    THREAD_SUMMARY = {
-        "system_message": "Summarise the provided discussion thread about a food delivery company called Deliveroo. Do not include usernames or any personal information in your response. ",
+
+
+class ThreadSummaryConfig:
+    """The LLM configuration for summarising a Reddit thread."""
+
+    config = BaseSummaryConfig.config | {
+        "system_message": """Summarise the provided discussion regarding a food delivery company called Deliveroo.
+            Try to identify delivery driver (often called a 'rider') experiences, customer experiences, and the company's business practices.
+            Dont start every summary with a phrase such as 'The discussion revolves around...', it's not needed.
+            Be concise but capture all distinct points.
+            """,
         "max_tokens": 1000,
     }
-    FINAL_SUMMARY = {
-        "system_message": "Summarise the provided summaries of the discussion threads about a food delivery company called Deliveroo. The topics of some summaries will be very similar, so focus on distinct points and avoid repetition.",
+
+
+class FinalSummaryConfig:
+    """The LLM configuration for summarising the summaries of the Reddit threads."""
+
+    config = BaseSummaryConfig.config | {
+        "system_message": """Summarise the provided summaries of the discussion threads about a food delivery company called Deliveroo.
+            The topics of some summaries may be similar to each other, so focus on distinct points and avoid repetition. Keep the summary concise.
+            """,
         "max_tokens": 300,
     }
-
-
-class CleanData:
-    TOKEN_LIMIT = 4000

@@ -64,9 +64,38 @@ class RedditThreadSchema:
                 "num_comments": {"type": "integer"},
                 "link_id": {"type": "string"},
                 "parent_id": {"type": "string"},
+                "content": {
+                    "type": "string"
+                },  # not required since it's created via a RedditThread method (doesn't come from API)
+                "summary": {
+                    "type": "string"
+                },  # not required since it's created via a RedditThread method (doesn't come from API)
             },
-            "required": ["id", "date", "author", "type", "content", "permalink"],
+            "required": [
+                "id",
+                "date",
+                "author",
+                "type",
+                "content",
+                "permalink",
+                "score",
+            ],
             "if": {"properties": {"type": {"const": "comment"}}},
             "then": {"required": ["link_id", "parent_id"]},
         },
+    }
+
+
+class LLMConfigSchema:
+    schema = {
+        "type": "object",
+        "properties": {
+            "model": {"type": "string", "const": "gpt-3.5-turbo"},
+            "temperature": {"type": "number"},
+            "top_p": {"type": "number"},
+            "system_message": {"type": "string"},
+            "max_tokens": {"type": "integer"},
+        },
+        "required": ["model", "temperature", "top_p", "system_message", "max_tokens"],
+        "additionalProperties": False,
     }

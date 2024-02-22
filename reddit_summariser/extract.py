@@ -66,9 +66,7 @@ def save_threads_as_json(subreddit_name, output_directory, limit=10):
         thread = process_submission(submission)
         save_data_to_json(
             thread,
-            os.path.join(
-                output_directory, f"thread_submission_id_{thread[0]['id']}.json"
-            ),
+            os.path.join(output_directory, f"{thread[0]['id']}.json"),
         )
 
 
