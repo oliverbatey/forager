@@ -161,5 +161,6 @@ class RedditThread:
 
     def to_json(self, file_path):
         thread_dict = self.to_dict()
+        jsonschema.validate(thread_dict, RedditThreadSchema.schema)
         with open(file_path, "w") as file:
             json.dump(thread_dict, file, indent=4)
