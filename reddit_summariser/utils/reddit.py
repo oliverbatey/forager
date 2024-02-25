@@ -1,25 +1,28 @@
 import json
 import jsonschema
+import os
 from utils.json_schemas import (
     RedditCommentSchema,
     RedditSubmissionSchema,
     RedditThreadSchema,
+    RedditThreadCollectionSchema,
 )
 from utils.summarise import Summariser
+from glob import glob
 
 
 class Submission:
     def __init__(
-        self,
-        id,
-        date,
-        author,
-        type,
-        content,
-        permalink,
-        score,
-        upvote_ratio,
-        num_comments,
+        self: str,
+        id: str,
+        date: str,
+        author: str,
+        type: str,
+        content: str,
+        permalink: str,
+        score: str,
+        upvote_ratio: str,
+        num_comments: str,
     ):
         self.id = id
         self.date = date
@@ -54,16 +57,16 @@ class Submission:
 
 class Comment:
     def __init__(
-        self,
-        id,
-        date,
-        author,
-        type,
-        content,
-        permalink,
-        score,
-        link_id=None,
-        parent_id=None,
+        self: str,
+        id: str,
+        date: str,
+        author: str,
+        type: str,
+        content: str,
+        permalink: str,
+        score: str,
+        link_id: str,
+        parent_id: str,
     ):
         self.id = id
         self.date = date
@@ -98,8 +101,8 @@ class Comment:
 
 class RedditThread:
     def __init__(self, submission, comments=None):
-        self.submission = submission
-        self.comments = comments if comments else []
+        self.submission: Submission = submission
+        self.comments: list[Comment] = comments if comments else []
 
     def add_comment(self, comment):
         self.comments.append(comment)
@@ -139,24 +142,8 @@ class RedditThread:
         with open(file_path, "r") as file:
             json_data = json.load(file)
         jsonschema.validate(json_data, RedditThreadSchema.schema)
-        # If the jsonschema validation passes then the first element of json_data
-        # is the submission is the submission and remaining elements are comments.
-        submission = Submission(**json_data[0])
-        comments_data = json_data[1:]
-        comments = [
-            Comment(
-                comment["id"],
-                comment["date"],
-                comment["author"],
-                comment["type"],
-                comment["content"],
-                comment["permalink"],
-                comment["score"],
-                comment.get("link_id"),
-                comment.get("parent_id"),
-            )
-            for comment in comments_data
-        ]
+        submission = Submission(**json_data['submission'])
+        comments = [Comment(**comment) for comment in json_data['comments']]
         return cls(submission, comments)
 
     def to_json(self, file_path):
@@ -164,3 +151,60 @@ class RedditThread:
         jsonschema.validate(thread_dict, RedditThreadSchema.schema)
         with open(file_path, "w") as file:
             json.dump(thread_dict, file, indent=4)
+
+
+class RedditThreadCollection:
+    def __init__(self, threads=None):
+        self.threads: list[RedditThread] = threads or []
+
+    def add_thread(self, thread):
+        self.threads.append(thread)
+
+    def __len__(self):
+        return len(self.threads)
+
+    def get_thread_by_submission_id(self, submission_id):
+        return next(
+            (
+                thread
+                for thread in self.threads
+                if thread.submission.id == submission_id
+            ),
+            None,
+        )
+
+    def _join_summaries(self) -> str:
+        return "\n".join(
+            f"Thread Summary {i+1}:\n{thread.summary}"
+            for i, thread in enumerate(self.threads)
+        )
+
+    def _summarise(self, llm_config: dict):
+        if not self.threads:
+            raise ValueError("No threads to summarise.")
+        for thread in self.threads:
+            thread.summarise(llm_config)
+
+    def summarise(self, llm_config: dict):
+        self._summarise(llm_config["thread_summary"])
+        joined_summaries = self._join_summaries()
+        self.summary = Summariser().summarise(
+            joined_summaries, llm_config["final_summary"]
+        )
+
+    def to_json(self, file_path):
+        threads_data = [thread.to_dict() for thread in self.threads]
+        if hasattr(self, "summary"):
+            threads_data.append({"summary": self.summary})
+        jsonschema.validate(threads_data, RedditThreadCollectionSchema.schema)
+        with open(file_path, "w") as file:
+            json.dump(threads_data, file, indent=4)
+
+    @classmethod
+    def from_directory(cls, directory: str):
+        return cls(
+            [
+                RedditThread.from_json(path)
+                for path in glob(os.path.join(directory, "*.json"))
+            ]
+        )

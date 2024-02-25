@@ -1,6 +1,7 @@
 import argparse
 import extract
 import summarise
+import publish
 
 
 def parse_args():
@@ -38,7 +39,20 @@ def parse_args():
         "-o",
         "--output_directory",
         default="summarise_output",
-        help=("Directory that the summarise step saves files to."),
+        help=("Directory that the publish step saves files to."),
+    )
+    parser_publish = subparsers.add_parser("summarise")
+    parser_publish.add_argument(
+        "-i",
+        "--input_directory",
+        default="extract_output",
+        help=("Directory that the publish step loads files from."),
+    )
+    parser_publish.add_argument(
+        "-o",
+        "--output_directory",
+        default="summarise_output",
+        help=("Directory that the publish step saves files to."),
     )
     return parser.parse_args()
 
@@ -53,6 +67,10 @@ def main():
         )
     elif args.command == "summarise":
         summarise.main(
+            input_directory=args.input_directory, output_directory=args.output_directory
+        )
+    elif args.command == "publish":
+        publish.main(
             input_directory=args.input_directory, output_directory=args.output_directory
         )
     else:

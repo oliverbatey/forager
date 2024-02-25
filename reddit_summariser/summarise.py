@@ -1,38 +1,60 @@
 import os
-from glob import glob
-from utils.reddit import RedditThread
-from utils.summarise import Summariser
-from constants import ThreadSummaryConfig, FinalSummaryConfig
+import logging
+from utils.reddit import RedditThreadCollection
 
+logging.basicConfig(
+    format="%(asctime)s.%(msecs)03d - %(name)s:%(levelname)s - pid %(process)d - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.INFO,
+)
 
-def load_threads(input_directory: str) -> list[RedditThread]:
-    return [
-        RedditThread.from_json(path)
-        for path in glob(os.path.join(input_directory, "*.json"))
-    ]
+logger = logging.getLogger(__name__)
 
+class OpenAiRequestConfig:
+    def __init__(self, summary_type):
+        self.summary_type = summary_type
 
-def join_summaries(threads: list[RedditThread]) -> str:
-    s = ""
-    for i, thread in enumerate(threads):
-        if i == 0:
-            s = f"Thread Summary 1:\n{thread.summary}\n"
+    def generate_config(self):
+        if self.summary_type == "thread_summary":
+            return self._generate_thread_summary_config()
+        elif self.summary_type == "final_summary":
+            return self._generate_final_summary_config()
         else:
-            s += f"Thread Summary {i+1}:\n{thread.summary}\n"
-    return s
+            raise ValueError("Invalid summary type")
 
+    def _generate_thread_summary_config(self):
+        system_message = """Summarise the provided discussion regarding a food delivery company called Deliveroo.
+            Try to identify delivery driver (often called a 'rider') experiences, customer experiences, and the company's
+            business practices. Dont start every summary with a phrase such as 'The discussion revolves around...'.
+            Be concise but capture all distinct points.
+            """
+        max_tokens = 1000
+        return self._generate_config(system_message, max_tokens)
+
+    def _generate_final_summary_config(self):
+        system_message = """Summarise the provided summaries of the discussion threads about a food delivery company called Deliveroo.
+            The topics of some summaries may be similar to each other, so focus on distinct points and avoid repetition.
+            Keep the summary concise.
+            """
+        max_tokens = 300
+        return self._generate_config(system_message, max_tokens)
+
+    def _generate_config(self, system_message, max_tokens):
+        return {
+            "model": "gpt-3.5-turbo",
+            "temperature": 0.0,
+            "top_p": 1,
+            "system_message": system_message,
+            "max_tokens": max_tokens,
+        }
 
 def main(input_directory: str, output_directory: str) -> None:
-    threads = load_threads(input_directory)
-
-    # Generate summaries for each thread and then save the thread and its summary to a json file for later processing.
-    for thread in threads:
-        thread.summarise(llm_config=ThreadSummaryConfig.config)
-        thread.to_json(os.path.join(output_directory, f"{thread.submission.id}.json"))
-    summary = join_summaries(threads)
-    final_summary = Summariser().summarise(summary, FinalSummaryConfig.config)
-
-    with open(os.path.join(output_directory, "thread_summaries.txt"), "w") as file:
-        file.write(summary)
-    with open(os.path.join(output_directory, "final_summary.txt"), "w") as file:
-        file.write(final_summary)
+    llm_config = {
+        "thread_summary": OpenAiRequestConfig("thread_summary").generate_config(),
+        "final_summary": OpenAiRequestConfig("final_summary").generate_config(),
+    }
+    threads = RedditThreadCollection.from_directory(input_directory)
+    logging.info("Summarising threads")
+    threads.summarise(llm_config)
+    logger.info("Saving summarised RedditThreadCollection to JSON file.")
+    threads.to_json(os.path.join(output_directory, "summarised_threads.json"))

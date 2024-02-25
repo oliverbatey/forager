@@ -1,12 +1,18 @@
 import os
+import logging
 import praw
 import json
-import jsonschema
-import utils.json_schemas as json_schemas  # user defined, not to be confused with the jsonschema module
 from datetime import datetime
 import constants
 from utils.reddit import Comment, Submission, RedditThread
 
+logging.basicConfig(
+    format="%(asctime)s.%(msecs)03d - %(name)s:%(levelname)s - pid %(process)d - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.INFO,
+)
+
+logger = logging.getLogger(__name__)
 
 def authenticate():
     client_id = constants.RedditAuthenticationTokens.CLIENT_ID
@@ -61,12 +67,14 @@ def process_submission(submission) -> RedditThread:
 def save_threads_as_json(subreddit_name, output_directory, limit=10):
     for submission in subreddit_name.new(limit=limit):
         thread = process_submission(submission)
+        logger.info(f"Saving thread {thread.submission.id} to JSON")
         thread.to_json(
             os.path.join(output_directory, f"{thread.submission.id}.json"),
         )
 
 
 def main(subreddit_name: str, limit: int, output_directory: str):
+    logger.info("Extracting threads from the Reddit API")
     reddit = authenticate()
     subreddit = reddit.subreddit(subreddit_name)
     save_threads_as_json(subreddit, output_directory, limit)

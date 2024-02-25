@@ -1,6 +1,7 @@
 from openai import OpenAI
 import jsonschema
-from utils.json_schemas import LLMConfigSchema
+from utils.json_schemas import OpenAiRequestSchema
+
 
 
 class Summariser:
@@ -19,7 +20,7 @@ class Summariser:
         Returns:
         - summary (str): The summarised text.
         """
-        jsonschema.validate(llm_config, LLMConfigSchema.schema)
+        jsonschema.validate(llm_config, OpenAiRequestSchema.schema)
         response = self.client.chat.completions.create(
             model=llm_config["model"],
             messages=[
