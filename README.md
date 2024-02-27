@@ -18,11 +18,13 @@ This loads the summarised threads and the final summary of summaries and creates
 
 
 ## API Tokens
-This project requires you to obtain three API tokens and set them as environment variables:
+This project requires you to obtain three API tokens/credentials and set them as environment variables:
 
 * `REDDIT_CLIENT_ID`
 * `REDDIT_CLIENT_SECRET`
 * `OPENAI_API_KEY`
+
+The information [here](https://www.reddit.com/wiki/api/) should help you get started obtaining credentials to use the Reddit API.
 
 ## Running Locally
 The project dependencies are managed by Poetry. To install, clone the repository and install dependencies via the `poetry install` command; see the [official poetry docs](https://python-poetry.org/docs/basic-usage/) for a guide to installing existing projects with poetry.
