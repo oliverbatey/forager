@@ -9,7 +9,7 @@ This makes a request to Reddit's API for submissions and comments on a given sub
 Using the json response, the extract step constructs `RedditThread` objects, a class representing of single reddit submission and its comments. The main advantage of using a class to represent the thread, instead of handling json files directly, is that it makes it easier to keep the thread summaries, created later, attched to the corresponding thread content. This class also provides convenient functions for saving and loading to json, and validating the thread schema.
 
 ### Summarise
-There are two summarisation steps:
+There are two summarisation steps which are currently performed by `gpt-3.5-turbo`:
 1. Each thread received from the API is summarised, providing `N` summaries, 5 by default.
 2. The `N` summaries are themselves summarised, into a short paragraph describing the main topics.
 
