@@ -1,7 +1,7 @@
 # Socials Summariser - Proof of Concept
-Proof of concept tool designed to extract Deliveroo-related content from Reddit and generate summaries for convenient access within the company. If this project receives approval for automation, the code will be transferred to a new repository using the ML Platform cookiecutter. This transition will enable it to operate as an Argo Workflow.
+Proof of concept tool designed to extract Deliveroo-related content from Reddit and generate summaries for convenient access within the company. If this project receives approval for automation, the code will be transferred to a new repository structured using the ML Platform cookiecutter. This transition will enable it to operate as an Argo Workflow.
 
-The summarisation is divided into three steps: `extract`, `summarise` and `publish`. The logic for these functions are contained in their respective python files `reddit_summariser/{extract, summarise, publish}`. Each of these can be executed via a Python CLI.
+The summarisation is divided into three steps: `extract`, `summarise` and `publish`. The logic for these functions are contained in their respective python files `reddit_summariser/{extract, summarise, publish}.py`. Each of these can be executed via a Python CLI.
 
 ### Extract
 This makes a request to Reddit's API for submissions and comments on a given subreddit (`r/deliveroos` by default). By default, the newest 5 submissions are pulled, but this could easily be extended.
