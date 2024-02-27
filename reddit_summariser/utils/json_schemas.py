@@ -49,29 +49,29 @@ class RedditCommentSchema(BaseRedditResponseSchema):
 
 class RedditThreadSchema:
     schema = {
-    "type": "object",
-    "properties": {
-        "submission": {
-            "type": "object",
-            "properties": RedditSubmissionSchema().schema["properties"],
-            "required": RedditSubmissionSchema().schema["required"],
-            "additionalProperties": False
-        },
-        "comments": {
-            "type": "array",
-            "items": {
+        "type": "object",
+        "properties": {
+            "submission": {
                 "type": "object",
-                "properties": RedditCommentSchema().schema["properties"],
-                "required": RedditCommentSchema().schema["required"],
-                "additionalProperties": False
-            }
+                "properties": RedditSubmissionSchema().schema["properties"],
+                "required": RedditSubmissionSchema().schema["required"],
+                "additionalProperties": False,
+            },
+            "comments": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": RedditCommentSchema().schema["properties"],
+                    "required": RedditCommentSchema().schema["required"],
+                    "additionalProperties": False,
+                },
+            },
+            "thread_content": {"type": ["string", "null"]},
+            "summary": {"type": ["string", "null"]},
         },
-        "thread_content": {"type": "string"},
-        "summary": {"type": "string"}
-    },
-    "required": ["submission", "comments"],
-    "additionalProperties": False
-}
+        "required": ["submission", "comments"],
+        "additionalProperties": False,
+    }
 
 
 class RedditThreadCollectionSchema:
@@ -82,7 +82,7 @@ class RedditThreadCollectionSchema:
                 "type": "array",
                 "items": RedditThreadSchema.schema,
             },
-            "summary": {"type": "string"}  # Summary of thread summaries
+            "summary": {"type": "string"},  # Summary of thread summaries
         },
         "required": ["threads"],
     }
@@ -92,7 +92,7 @@ class OpenAiRequestSchema:
     schema = {
         "type": "object",
         "properties": {
-            "model": {"type": "string", "const": "gpt-3.5-turbo"},
+            "model": {"type": "string"},
             "temperature": {"type": "number"},
             "top_p": {"type": "number"},
             "system_message": {"type": "string"},

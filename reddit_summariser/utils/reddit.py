@@ -100,9 +100,11 @@ class Comment:
 
 
 class RedditThread:
-    def __init__(self, submission, comments=None):
+    def __init__(self, submission, comments=None, thread_content=None, summary=None):
         self.submission: Submission = submission
         self.comments: list[Comment] = comments if comments else []
+        self.thread_content = thread_content
+        self.summary = summary
 
     def add_comment(self, comment):
         self.comments.append(comment)
@@ -142,8 +144,8 @@ class RedditThread:
         with open(file_path, "r") as file:
             json_data = json.load(file)
         jsonschema.validate(json_data, RedditThreadSchema.schema)
-        submission = Submission(**json_data['submission'])
-        comments = [Comment(**comment) for comment in json_data['comments']]
+        submission = Submission(**json_data["submission"])
+        comments = [Comment(**comment) for comment in json_data["comments"]]
         return cls(submission, comments)
 
     def to_json(self, file_path):
@@ -154,8 +156,9 @@ class RedditThread:
 
 
 class RedditThreadCollection:
-    def __init__(self, threads=None):
+    def __init__(self, threads=None, summary=None):
         self.threads: list[RedditThread] = threads or []
+        self.summary = summary or None
 
     def add_thread(self, thread):
         self.threads.append(thread)
@@ -193,9 +196,11 @@ class RedditThreadCollection:
         )
 
     def to_json(self, file_path):
-        threads_data = [thread.to_dict() for thread in self.threads]
+        threads_data = {
+            "threads": [thread.to_dict() for thread in self.threads],
+        }
         if hasattr(self, "summary"):
-            threads_data.append({"summary": self.summary})
+            threads_data["summary"] = self.summary
         jsonschema.validate(threads_data, RedditThreadCollectionSchema.schema)
         with open(file_path, "w") as file:
             json.dump(threads_data, file, indent=4)
@@ -208,3 +213,19 @@ class RedditThreadCollection:
                 for path in glob(os.path.join(directory, "*.json"))
             ]
         )
+
+    @classmethod
+    def from_json(cls, file_path: str):
+        with open(file_path, "r") as file:
+            json_data = json.load(file)
+        jsonschema.validate(json_data, RedditThreadCollectionSchema.schema)
+        threads = [
+            RedditThread(
+                Submission(**thread["submission"]),
+                [Comment(**comment) for comment in thread["comments"]],
+                thread.get("thread_content"),
+                thread.get("summary"),
+            )
+            for thread in json_data["threads"]
+        ]
+        return cls(threads, json_data["summary"])

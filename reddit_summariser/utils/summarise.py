@@ -3,7 +3,6 @@ import jsonschema
 from utils.json_schemas import OpenAiRequestSchema
 
 
-
 class Summariser:
     def __init__(self):
         self.client = OpenAI()

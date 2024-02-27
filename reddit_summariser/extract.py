@@ -14,6 +14,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+
 def authenticate():
     client_id = constants.RedditAuthenticationTokens.CLIENT_ID
     client_secret = constants.RedditAuthenticationTokens.CLIENT_SECRET
@@ -64,7 +65,7 @@ def process_submission(submission) -> RedditThread:
     return RedditThread(submission_obj, comments)
 
 
-def save_threads_as_json(subreddit_name, output_directory, limit=10):
+def save_threads_as_json(subreddit_name, output_directory, limit=constants.Extract.NUMBER_OF_THREADS):
     for submission in subreddit_name.new(limit=limit):
         thread = process_submission(submission)
         logger.info(f"Saving thread {thread.submission.id} to JSON")
@@ -73,7 +74,7 @@ def save_threads_as_json(subreddit_name, output_directory, limit=10):
         )
 
 
-def main(subreddit_name: str, limit: int, output_directory: str):
+def main(subreddit_name: str, output_directory: str, limit: int):
     logger.info("Extracting threads from the Reddit API")
     reddit = authenticate()
     subreddit = reddit.subreddit(subreddit_name)

@@ -1,3 +1,5 @@
+import constants
+
 import argparse
 import extract
 import summarise
@@ -18,7 +20,7 @@ def parse_args():
     )
     parser_extract.add_argument(
         "--limit",
-        default=10,
+        default=constants.Extract.NUMBER_OF_THREADS,
         help=("Limit on the number of submissions to extract."),
     )
     parser_extract.add_argument(
@@ -41,7 +43,7 @@ def parse_args():
         default="summarise_output",
         help=("Directory that the publish step saves files to."),
     )
-    parser_publish = subparsers.add_parser("summarise")
+    parser_publish = subparsers.add_parser("publish")
     parser_publish.add_argument(
         "-i",
         "--input_directory",

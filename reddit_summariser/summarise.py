@@ -1,6 +1,7 @@
 import os
 import logging
 from utils.reddit import RedditThreadCollection
+from constants import LLMConstants
 
 logging.basicConfig(
     format="%(asctime)s.%(msecs)03d - %(name)s:%(levelname)s - pid %(process)d - %(message)s",
@@ -9,6 +10,7 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
 
 class OpenAiRequestConfig:
     def __init__(self, summary_type):
@@ -32,21 +34,21 @@ class OpenAiRequestConfig:
         return self._generate_config(system_message, max_tokens)
 
     def _generate_final_summary_config(self):
-        system_message = """Summarise the provided summaries of the discussion threads about a food delivery company called Deliveroo.
+        system_message = """Summarise the provided summaries in a single, SHORT paragraph.
             The topics of some summaries may be similar to each other, so focus on distinct points and avoid repetition.
-            Keep the summary concise.
             """
         max_tokens = 300
         return self._generate_config(system_message, max_tokens)
 
     def _generate_config(self, system_message, max_tokens):
         return {
-            "model": "gpt-3.5-turbo",
-            "temperature": 0.0,
-            "top_p": 1,
+            "model": LLMConstants.model,
+            "temperature": LLMConstants.temperature,
+            "top_p": LLMConstants.top_p,
             "system_message": system_message,
             "max_tokens": max_tokens,
         }
+
 
 def main(input_directory: str, output_directory: str) -> None:
     llm_config = {
