@@ -4,7 +4,7 @@ Proof of concept tool designed to extract Deliveroo-related content from Reddit 
 The summarisation is divided into three steps: `extract`, `summarise` and `publish`. The logic for these functions are contained in their respective python files `reddit_summariser/{extract, summarise, publish}.py`. Each of these can be executed via a Python CLI.
 
 ### Extract
-This makes a request to Reddit's API for submissions and comments on a given subreddit (`r/deliveroos` by default). By default, the newest 5 submissions are pulled, but this could easily be extended.
+This makes a request to Reddit's API for submissions and comments on a given subreddit. By default, the extracts the latest 5 threads from `r/deliveroos`.
 
 Using the json response, the extract step constructs `RedditThread` objects, a class representing of single reddit submission and its comments. The main advantage of using a class to represent the thread, instead of handling json files directly, is that it makes it easier to keep the thread summaries, created later, attached to the corresponding thread content. This class also provides convenient functions for saving and loading to json, and validating the thread schema.
 
