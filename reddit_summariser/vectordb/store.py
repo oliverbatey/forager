@@ -3,6 +3,9 @@ import logging
 import os
 from typing import Optional
 
+# Disable ChromaDB telemetry before importing chromadb
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 import chromadb
 from chromadb.config import Settings
 from openai import OpenAI
@@ -14,6 +17,10 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
     level=logging.INFO,
 )
+
+# Suppress noisy httpx request logs
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("chromadb.telemetry").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
