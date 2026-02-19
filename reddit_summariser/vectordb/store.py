@@ -4,6 +4,7 @@ import os
 from typing import Optional
 
 import chromadb
+from chromadb.config import Settings
 from openai import OpenAI
 
 from models import RedditThread, RedditThreadCollection
@@ -27,7 +28,10 @@ class VectorStore:
 
     def __init__(self, persist_directory: Optional[str] = None):
         persist_dir = persist_directory or CHROMA_DATA_DIR
-        self.client = chromadb.PersistentClient(path=persist_dir)
+        self.client = chromadb.PersistentClient(
+            path=persist_dir,
+            settings=Settings(anonymized_telemetry=False),
+        )
         self.collection = self.client.get_or_create_collection(
             name=COLLECTION_NAME,
             metadata={"hnsw:space": "cosine"},
