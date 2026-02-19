@@ -1,0 +1,21 @@
+# Fly.io configuration for Forager
+# Deploy with: fly launch && fly deploy
+# Set secrets with: fly secrets set OPENAI_API_KEY=... REDDIT_CLIENT_ID=... REDDIT_CLIENT_SECRET=... TELEGRAM_BOT_TOKEN=...
+
+app = "forager-bot"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+# No HTTP service needed - the bot uses long-polling
+# Fly will keep the machine running as long as the process is alive
+
+[mounts]
+  source = "forager_data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+
