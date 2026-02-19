@@ -1,22 +1,16 @@
 [tool.poetry]
-name = "reddit-summariser"
-version = "0.1.0"
-description = ""
-authors = ["Oliver Batey <oliver.batey@deliveroo.co.uk>"]
+name = "forager"
+version = "0.2.0"
+description = "An AI agent that collects and chats with news and discussions from across the web"
+authors = ["Oliver Batey"]
 readme = "README.md"
-
-[[tool.poetry.source]]
-name = "deliveroo"
-secondary = true
-url = "https://deliveroo.jfrog.io/deliveroo/api/pypi/python-packages/simple"
 
 [tool.poetry.dependencies]
 python = "^3.10"
 requests = "^2.31.0"
 praw = "^7.7.1"
-jsonschema = "^4.21.1"
+pydantic = "^2.0"
 openai = "^1.12.0"
-
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.1.1"

@@ -52,7 +52,11 @@ MANIFEST
 .venv*/
 .conda*/
 
-# metaflow run data
-.metaflow/*
-data/*
-metaflow_card_cache/*
+# Environment
+.env
+
+# Data directories
+extract_output/
+summarise_output/
+publish_output/
+chroma_data/
