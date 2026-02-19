@@ -6,12 +6,40 @@ Forager can extract threads from Reddit, summarise them using an LLM, store the 
 
 ## Architecture
 
-```
-User (Telegram) → Bot → Agent (OpenAI function calling) → Tools
-                                                            ├── search_knowledge_base (ChromaDB)
-                                                            ├── fetch_reddit_thread (PRAW)
-                                                            ├── fetch_subreddit_posts (PRAW)
-                                                            └── seed_subreddit (extract → summarise → embed)
+```mermaid
+flowchart TD
+    User["User on Telegram"] --> TelegramBot
+
+    subgraph interface [Telegram Bot]
+        TelegramBot["python-telegram-bot"]
+    end
+
+    TelegramBot --> AgentLoop
+
+    subgraph agent [AI Agent]
+        AgentLoop["Agent Loop with OpenAI function calling"]
+        Tool1["search_knowledge_base"]
+        Tool2["fetch_reddit_thread"]
+        Tool3["fetch_subreddit_posts"]
+        Tool4["seed_subreddit"]
+        AgentLoop --> Tool1
+        AgentLoop --> Tool2
+        AgentLoop --> Tool3
+        AgentLoop --> Tool4
+    end
+
+    Tool1 -->|"semantic search"| ChromaDB
+    Tool2 -->|"fetch by ID"| RedditAPI
+    Tool3 -->|"browse hot/new/top"| RedditAPI
+    Tool4 --> SeedPipeline
+
+    subgraph ingestion [Seed Pipeline]
+        SeedPipeline["Extract via PRAW"] --> Summarise["Summarise via OpenAI"]
+        Summarise --> Embed["Chunk and embed"]
+        Embed --> ChromaDB["ChromaDB"]
+    end
+
+    RedditAPI["Reddit API via PRAW"]
 ```
 
 ## Features

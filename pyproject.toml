@@ -4,6 +4,7 @@ version = "0.2.0"
 description = "An AI agent that collects and chats with news and discussions from across the web"
 authors = ["Oliver Batey"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
