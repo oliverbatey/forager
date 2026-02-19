@@ -1,13 +1,10 @@
 import argparse
 import logging
-import os
 
 import constants
 import extract
-import summarise
-import publish
 from models import RedditThreadCollection
-from summarise import build_llm_configs, summarise_collection
+from summarise import build_llm_configs
 from utils.summarise import Summariser
 from vectordb.store import VectorStore
 
@@ -22,60 +19,9 @@ logger = logging.getLogger(__name__)
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Forager - extract, summarise and chat with Reddit content"
+        description="Forager - chat with Reddit content via an AI agent"
     )
     subparsers = parser.add_subparsers(help="sub-command help", dest="command")
-
-    # --- extract ---
-    parser_extract = subparsers.add_parser("extract")
-    parser_extract.add_argument(
-        "-s",
-        "--subreddit",
-        required=True,
-        help="Name of the subreddit to extract data from (e.g. 'python').",
-    )
-    parser_extract.add_argument(
-        "--limit",
-        default=constants.Extract.NUMBER_OF_THREADS,
-        type=int,
-        help="Limit on the number of submissions to extract.",
-    )
-    parser_extract.add_argument(
-        "-o",
-        "--output_directory",
-        default="extract_output",
-        help="Directory that the extract step saves Reddit content to.",
-    )
-
-    # --- summarise ---
-    parser_summarise = subparsers.add_parser("summarise")
-    parser_summarise.add_argument(
-        "-i",
-        "--input_directory",
-        default="extract_output",
-        help="Directory that the summarise step loads files from.",
-    )
-    parser_summarise.add_argument(
-        "-o",
-        "--output_directory",
-        default="summarise_output",
-        help="Directory that the summarise step saves files to.",
-    )
-
-    # --- publish ---
-    parser_publish = subparsers.add_parser("publish")
-    parser_publish.add_argument(
-        "-i",
-        "--input_directory",
-        default="extract_output",
-        help="Directory that the publish step loads files from.",
-    )
-    parser_publish.add_argument(
-        "-o",
-        "--output_directory",
-        default="summarise_output",
-        help="Directory that the publish step saves files to.",
-    )
 
     # --- seed ---
     parser_seed = subparsers.add_parser(
@@ -130,26 +76,7 @@ def seed(subreddit_name: str, limit: int):
 
 def main():
     args = parse_args()
-    if args.command == "extract":
-        os.makedirs(args.output_directory, exist_ok=True)
-        extract.main(
-            subreddit_name=args.subreddit,
-            limit=args.limit,
-            output_directory=args.output_directory,
-        )
-    elif args.command == "summarise":
-        os.makedirs(args.output_directory, exist_ok=True)
-        summarise.main(
-            input_directory=args.input_directory,
-            output_directory=args.output_directory,
-        )
-    elif args.command == "publish":
-        os.makedirs(args.output_directory, exist_ok=True)
-        publish.main(
-            input_directory=args.input_directory,
-            output_directory=args.output_directory,
-        )
-    elif args.command == "seed":
+    if args.command == "seed":
         seed(
             subreddit_name=args.subreddit,
             limit=args.limit,

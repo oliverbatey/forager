@@ -1,4 +1,3 @@
-import os
 import logging
 from datetime import datetime
 
@@ -60,19 +59,3 @@ def process_submission(submission) -> RedditThread:
     return RedditThread(submission=submission_data, comments=comments)
 
 
-def save_threads_as_json(
-    subreddit, output_directory, limit=constants.Extract.NUMBER_OF_THREADS
-):
-    for submission in subreddit.new(limit=limit):
-        thread = process_submission(submission)
-        logger.info(f"Saving thread {thread.submission.id} to JSON")
-        thread.to_json_file(
-            os.path.join(output_directory, f"{thread.submission.id}.json"),
-        )
-
-
-def main(subreddit_name: str, output_directory: str, limit: int):
-    logger.info(f"Extracting threads from r/{subreddit_name}")
-    reddit = authenticate()
-    subreddit = reddit.subreddit(subreddit_name)
-    save_threads_as_json(subreddit, output_directory, limit)

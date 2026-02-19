@@ -47,7 +47,6 @@ flowchart TD
 - **Seed**: Extract threads from any subreddit, summarise them, and store in a vector database
 - **Chat**: Conversational AI agent that searches stored content and fetches live Reddit data as needed
 - **Telegram bot**: Chat with the agent from your phone
-- **Legacy pipeline**: The original extract → summarise → publish pipeline still works via CLI
 
 ## Setup
 
@@ -99,11 +98,6 @@ Then open your bot in Telegram and use:
 ```bash
 # Seed the vector database directly
 python reddit_summariser/runner.py seed -s python --limit 5
-
-# Or use the legacy pipeline
-python reddit_summariser/runner.py extract -s python -o extract_output
-python reddit_summariser/runner.py summarise -i extract_output -o summarise_output
-python reddit_summariser/runner.py publish -i summarise_output -o publish_output
 ```
 
 ## Deployment (Fly.io)
