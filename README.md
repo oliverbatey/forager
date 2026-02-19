@@ -2,13 +2,24 @@
 
 An AI agent that collects and chats with news and discussions from across the web.
 
-Forager can extract threads from Reddit, summarise them using an LLM, and store the content in a vector database for conversational retrieval via a Telegram bot.
+Forager can extract threads from Reddit, summarise them using an LLM, store the content in a vector database, and let you chat with it all via a Telegram bot.
+
+## Architecture
+
+```
+User (Telegram) → Bot → Agent (OpenAI function calling) → Tools
+                                                            ├── search_knowledge_base (ChromaDB)
+                                                            ├── fetch_reddit_thread (PRAW)
+                                                            ├── fetch_subreddit_posts (PRAW)
+                                                            └── seed_subreddit (extract → summarise → embed)
+```
 
 ## Features
 
-- **Extract**: Fetch threads (submissions + comments) from any subreddit via the Reddit API
-- **Summarise**: Generate per-thread and collection-level summaries using OpenAI
-- **Publish**: Format summaries for easy reading
+- **Seed**: Extract threads from any subreddit, summarise them, and store in a vector database
+- **Chat**: Conversational AI agent that searches stored content and fetches live Reddit data as needed
+- **Telegram bot**: Chat with the agent from your phone
+- **Legacy pipeline**: The original extract → summarise → publish pipeline still works via CLI
 
 ## Setup
 
@@ -33,30 +44,56 @@ Copy the example environment file and fill in your credentials:
 cp .env.example .env
 ```
 
-Required variables:
-
 | Variable | Description |
 |----------|-------------|
 | `OPENAI_API_KEY` | OpenAI API key |
-| `REDDIT_CLIENT_ID` | Reddit API client ID |
+| `REDDIT_CLIENT_ID` | Reddit API client ID ([docs](https://www.reddit.com/wiki/api/)) |
 | `REDDIT_CLIENT_SECRET` | Reddit API client secret |
-| `TELEGRAM_BOT_TOKEN` | Telegram bot token (for chat interface) |
-
-See [Reddit's API docs](https://www.reddit.com/wiki/api/) for obtaining Reddit credentials.
+| `TELEGRAM_BOT_TOKEN` | Telegram bot token (create via [@BotFather](https://t.me/BotFather)) |
 
 ## Usage
+
+### Telegram Bot
+
+```bash
+python reddit_summariser/runner.py bot
+```
+
+Then open your bot in Telegram and use:
+- `/start` - Introduction and help
+- `/seed python 5` - Ingest 5 threads from r/python
+- `/status` - Check the knowledge base size
+- `/clear` - Reset conversation history
+- Send any message to chat with the agent
 
 ### CLI
 
 ```bash
-# Extract the latest 5 threads from a subreddit
+# Seed the vector database directly
+python reddit_summariser/runner.py seed -s python --limit 5
+
+# Or use the legacy pipeline
 python reddit_summariser/runner.py extract -s python -o extract_output
-
-# Summarise extracted threads
 python reddit_summariser/runner.py summarise -i extract_output -o summarise_output
-
-# Publish formatted summary
 python reddit_summariser/runner.py publish -i summarise_output -o publish_output
 ```
 
-Run `python reddit_summariser/runner.py --help` for all available options.
+## Deployment (Fly.io)
+
+```bash
+# Install the Fly CLI: https://fly.io/docs/flyctl/install/
+fly launch
+
+# Create a persistent volume for ChromaDB data
+fly volumes create forager_data --region lhr --size 1
+
+# Set your secrets
+fly secrets set \
+  OPENAI_API_KEY=... \
+  REDDIT_CLIENT_ID=... \
+  REDDIT_CLIENT_SECRET=... \
+  TELEGRAM_BOT_TOKEN=...
+
+# Deploy
+fly deploy
+```
