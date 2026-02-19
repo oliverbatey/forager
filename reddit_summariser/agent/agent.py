@@ -71,8 +71,9 @@ class Agent:
         """
         history = self._get_history(chat_id)
         history.append({"role": "user", "content": user_message})
+        logger.info(f"[chat={chat_id}] User: {user_message[:200]}")
 
-        for _ in range(MAX_TOOL_ROUNDS):
+        for round_num in range(MAX_TOOL_ROUNDS):
             response = self.openai.chat.completions.create(
                 model=self.model,
                 messages=history,
@@ -81,15 +82,24 @@ class Agent:
             )
 
             message = response.choices[0].message
+            usage = response.usage
 
             # If no tool calls, we have the final response
             if not message.tool_calls:
                 assistant_content = message.content or ""
                 history.append({"role": "assistant", "content": assistant_content})
+                logger.info(
+                    f"[chat={chat_id}] Final response after {round_num} tool round(s) "
+                    f"(tokens: {usage.prompt_tokens} prompt + {usage.completion_tokens} completion = {usage.total_tokens} total)"
+                )
                 self._trim_history(chat_id)
                 return assistant_content
 
             # Process tool calls
+            logger.info(
+                f"[chat={chat_id}] Round {round_num + 1}: LLM requested {len(message.tool_calls)} tool call(s) "
+                f"(tokens: {usage.prompt_tokens} prompt + {usage.completion_tokens} completion)"
+            )
             history.append(message.model_dump())
 
             for tool_call in message.tool_calls:
@@ -99,8 +109,10 @@ class Agent:
                 except json.JSONDecodeError:
                     fn_args = {}
 
-                logger.info(f"Tool call: {fn_name}({fn_args})")
+                logger.info(f"[chat={chat_id}]   -> {fn_name}({fn_args})")
                 result = dispatch_tool(self.store, fn_name, fn_args)
+                result_preview = result[:200] + "..." if len(result) > 200 else result
+                logger.info(f"[chat={chat_id}]   <- {fn_name} returned {len(result)} chars: {result_preview}")
 
                 history.append({
                     "role": "tool",
