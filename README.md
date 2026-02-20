@@ -100,6 +100,10 @@ Then open your bot in Telegram and use:
 python forager/runner.py seed -s python --limit 5
 ```
 
+## Agent Evaluations
+
+See [docs/evals.md](docs/evals.md) for how the agent's tool-selection behaviour is tested using real LLM calls.
+
 ## Deployment (Fly.io)
 
 ```bash
