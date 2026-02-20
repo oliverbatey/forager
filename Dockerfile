@@ -13,12 +13,12 @@ RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi --without dev
 
 # Copy application code
-COPY reddit_summariser/ reddit_summariser/
+COPY forager/ forager/
 
 # ChromaDB data persisted at /data (mounted as a Fly volume)
 ENV CHROMA_DATA_DIR=/data/chroma
 
-WORKDIR /app/reddit_summariser
+WORKDIR /app/forager
 
 CMD ["python", "runner.py", "bot"]
 

@@ -83,7 +83,7 @@ cp .env.example .env
 ### Telegram Bot
 
 ```bash
-python reddit_summariser/runner.py bot
+python forager/runner.py bot
 ```
 
 Then open your bot in Telegram and use:
@@ -97,7 +97,7 @@ Then open your bot in Telegram and use:
 
 ```bash
 # Seed the vector database directly
-python reddit_summariser/runner.py seed -s python --limit 5
+python forager/runner.py seed -s python --limit 5
 ```
 
 ## Deployment (Fly.io)

@@ -21,7 +21,7 @@ pytest = "^8.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["reddit_summariser"]
+pythonpath = ["forager"]
 
 [build-system]
 requires = ["poetry-core"]

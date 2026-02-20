@@ -38,6 +38,6 @@ jobs:
       - name: Run agent evals
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        working-directory: reddit_summariser
+        working-directory: forager
         run: poetry run python runner.py eval --markdown "$GITHUB_STEP_SUMMARY"
 
