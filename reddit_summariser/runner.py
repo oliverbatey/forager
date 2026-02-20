@@ -43,6 +43,11 @@ def parse_args():
     # --- bot ---
     subparsers.add_parser("bot", help="Start the Telegram bot.")
 
+    # --- eval ---
+    subparsers.add_parser(
+        "eval", help="Run agent evaluations (requires OPENAI_API_KEY)."
+    )
+
     return parser.parse_args()
 
 
@@ -84,6 +89,9 @@ def main():
     elif args.command == "bot":
         from bot.telegram import run_bot
         run_bot()
+    elif args.command == "eval":
+        from evals.eval_agent import main as eval_main
+        raise SystemExit(eval_main())
     else:
         raise ValueError(
             f"Unknown command: '{getattr(args, 'command', None)}', "
