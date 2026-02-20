@@ -115,7 +115,8 @@ TOOL_DEFINITIONS = [
             "name": "seed_subreddit",
             "description": (
                 "Extract, summarise, and store threads from a subreddit into the knowledge base. "
-                "Use this when the user explicitly asks to add/seed/ingest content from a subreddit."
+                "Use this when the user explicitly asks to add/seed/ingest content from a subreddit. "
+                "Maximum 3 threads per call."
             ),
             "parameters": {
                 "type": "object",
@@ -217,12 +218,16 @@ def execute_fetch_subreddit_posts(
         return f"Error fetching r/{subreddit}: {e}"
 
 
+MAX_SEED_THREADS = 3  # Hard cap to prevent excessive API usage
+
+
 def execute_seed_subreddit(
     store: VectorStore,
     subreddit: str,
-    limit: int = 5,
+    limit: int = 3,
 ) -> str:
     """Extract, summarise, and store threads from a subreddit."""
+    limit = min(limit, MAX_SEED_THREADS)
     reddit = authenticate()
     summariser = Summariser()
     llm_configs = build_llm_configs()

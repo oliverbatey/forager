@@ -6,6 +6,9 @@ Uses python-telegram-bot in long-polling mode (no webhooks needed).
 
 import logging
 import os
+import time
+from collections import defaultdict
+from datetime import datetime, timezone
 
 from telegram import Update
 from telegram.ext import (
@@ -29,6 +32,67 @@ logger = logging.getLogger(__name__)
 
 # Telegram has a 4096 character message limit
 MAX_MESSAGE_LENGTH = 4096
+
+# ---------------------------------------------------------------
+# Rate limiting and usage caps
+# ---------------------------------------------------------------
+MAX_MESSAGES_PER_USER_PER_HOUR = 20
+MAX_SEED_THREADS = 3
+DAILY_GLOBAL_MESSAGE_BUDGET = 200
+
+
+class UsageTracker:
+    """Track per-user rate limits and global daily usage."""
+
+    def __init__(self):
+        self._user_timestamps: dict[str, list[float]] = defaultdict(list)
+        self._daily_count: int = 0
+        self._current_day: str = ""
+
+    def _reset_if_new_day(self) -> None:
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        if today != self._current_day:
+            self._current_day = today
+            self._daily_count = 0
+            logger.info(f"Daily budget reset for {today}")
+
+    def check_rate_limit(self, user_id: str) -> str | None:
+        """Return an error message if the user is rate-limited, else None."""
+        self._reset_if_new_day()
+
+        # Global daily budget
+        if self._daily_count >= DAILY_GLOBAL_MESSAGE_BUDGET:
+            return (
+                "The bot has reached its daily message limit. "
+                "Please try again tomorrow! 🙏"
+            )
+
+        # Per-user hourly limit
+        now = time.time()
+        cutoff = now - 3600
+        timestamps = self._user_timestamps[user_id]
+        self._user_timestamps[user_id] = [t for t in timestamps if t > cutoff]
+
+        if len(self._user_timestamps[user_id]) >= MAX_MESSAGES_PER_USER_PER_HOUR:
+            return (
+                f"You've sent {MAX_MESSAGES_PER_USER_PER_HOUR} messages in the last hour. "
+                "Please wait a bit before sending more."
+            )
+
+        return None
+
+    def record_message(self, user_id: str) -> None:
+        """Record that a message was processed."""
+        self._user_timestamps[user_id].append(time.time())
+        self._daily_count += 1
+
+
+_usage = UsageTracker()
+
+
+# ---------------------------------------------------------------
+# Bot setup
+# ---------------------------------------------------------------
 
 
 def get_agent() -> Agent:
@@ -54,7 +118,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         "Hey! I'm Forager, an AI agent that can help you explore Reddit content.\n\n"
         "Here's what I can do:\n"
         "- Ask me about topics from seeded subreddits\n"
-        "- /seed <subreddit> [limit] - Ingest threads from a subreddit\n"
+        f"- /seed <subreddit> [limit] - Ingest threads (max {MAX_SEED_THREADS})\n"
         "- /clear - Clear our conversation history\n"
         "- /status - Check how many documents are in the knowledge base\n\n"
         "Try asking me something, or seed a subreddit first!"
@@ -79,15 +143,23 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def seed_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /seed <subreddit> [limit] command."""
+    user_id = str(update.effective_user.id)
+
+    # Rate limit check
+    blocked = _usage.check_rate_limit(user_id)
+    if blocked:
+        await update.message.reply_text(blocked)
+        return
+
     if not context.args:
         await update.message.reply_text(
-            "Usage: /seed <subreddit> [limit]\n"
-            "Example: /seed python 5"
+            f"Usage: /seed <subreddit> [limit]\n"
+            f"Example: /seed python 3  (max {MAX_SEED_THREADS} threads)"
         )
         return
 
     subreddit = context.args[0]
-    limit = 5
+    limit = MAX_SEED_THREADS
     if len(context.args) > 1:
         try:
             limit = int(context.args[1])
@@ -95,11 +167,15 @@ async def seed_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             await update.message.reply_text("Limit must be a number.")
             return
 
+    # Cap seed limit
+    limit = min(limit, MAX_SEED_THREADS)
+
     await update.message.reply_text(
         f"Seeding r/{subreddit} ({limit} threads). "
         "This may take a minute while threads are extracted and summarised..."
     )
 
+    _usage.record_message(user_id)
     agent = _get_agent()
     chat_id = str(update.effective_chat.id)
 
@@ -116,12 +192,20 @@ async def seed_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle regular text messages by routing them to the agent."""
+    user_id = str(update.effective_user.id)
     chat_id = str(update.effective_chat.id)
     user_message = update.message.text
 
     if not user_message:
         return
 
+    # Rate limit check
+    blocked = _usage.check_rate_limit(user_id)
+    if blocked:
+        await update.message.reply_text(blocked)
+        return
+
+    _usage.record_message(user_id)
     logger.info(f"Chat {chat_id}: {user_message[:100]}")
 
     try:
@@ -170,6 +254,11 @@ def run_bot() -> None:
         )
 
     logger.info("Starting Forager Telegram bot...")
+    logger.info(
+        f"Safeguards: {MAX_MESSAGES_PER_USER_PER_HOUR} msgs/user/hour, "
+        f"seed cap {MAX_SEED_THREADS} threads, "
+        f"{DAILY_GLOBAL_MESSAGE_BUDGET} msgs/day global budget"
+    )
 
     # Initialise agent eagerly so we fail fast on config issues
     global _agent
@@ -186,4 +275,3 @@ def run_bot() -> None:
 
     logger.info("Bot is running. Polling for messages...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
-
