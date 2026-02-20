@@ -17,6 +17,11 @@ python-telegram-bot = "^21.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.1.1"
+pytest = "^8.0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["reddit_summariser"]
 
 [build-system]
 requires = ["poetry-core"]
