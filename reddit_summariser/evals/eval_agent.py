@@ -140,7 +140,7 @@ def run_all() -> list[EvalCase]:
 
 
 def print_results(results: list[EvalCase]) -> None:
-    """Print a formatted results table."""
+    """Print a formatted results table to stdout."""
     print("\n" + "=" * 80)
     print("AGENT EVALUATION RESULTS")
     print("=" * 80)
@@ -160,14 +160,50 @@ def print_results(results: list[EvalCase]) -> None:
     print("=" * 80 + "\n")
 
 
-def main() -> int:
-    """Entry point. Returns 0 if all evals pass, 1 otherwise."""
+def format_markdown(results: list[EvalCase]) -> str:
+    """Format results as a markdown table for GitHub Actions Job Summary."""
+    passed = sum(1 for r in results if r.passed)
+    total = len(results)
+
+    lines = [
+        "## 🔍 Agent Eval Results",
+        "",
+        f"**{passed}/{total} passed**",
+        "",
+        "| Status | Eval | Prompt | Expected Tools | Actual Tools |",
+        "|--------|------|--------|---------------|-------------|",
+    ]
+    for r in results:
+        status = "✅" if r.passed else "❌"
+        expected = ", ".join(r.expected_tools)
+        actual = ", ".join(r.actual_tools) if r.actual_tools else "_(none)_"
+        lines.append(f"| {status} | {r.name} | {r.prompt} | `{expected}` | `{actual}` |")
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+def main(markdown_file: str = "") -> int:
+    """
+    Entry point. Returns 0 if all evals pass, 1 otherwise.
+
+    Args:
+        markdown_file: If provided, write markdown results to this file
+                       (used by CI to write to $GITHUB_STEP_SUMMARY).
+    """
     logging.basicConfig(
         format="%(asctime)s - %(name)s:%(levelname)s - %(message)s",
         level=logging.INFO,
     )
     results = run_all()
     print_results(results)
+
+    if markdown_file:
+        md = format_markdown(results)
+        with open(markdown_file, "a") as f:
+            f.write(md)
+        logger.info(f"Markdown results written to {markdown_file}")
+
     return 0 if all(r.passed for r in results) else 1
 
 

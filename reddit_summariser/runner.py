@@ -44,8 +44,13 @@ def parse_args():
     subparsers.add_parser("bot", help="Start the Telegram bot.")
 
     # --- eval ---
-    subparsers.add_parser(
+    parser_eval = subparsers.add_parser(
         "eval", help="Run agent evaluations (requires OPENAI_API_KEY)."
+    )
+    parser_eval.add_argument(
+        "--markdown",
+        default="",
+        help="Write markdown results to this file (e.g. $GITHUB_STEP_SUMMARY).",
     )
 
     return parser.parse_args()
@@ -91,7 +96,7 @@ def main():
         run_bot()
     elif args.command == "eval":
         from evals.eval_agent import main as eval_main
-        raise SystemExit(eval_main())
+        raise SystemExit(eval_main(markdown_file=args.markdown))
     else:
         raise ValueError(
             f"Unknown command: '{getattr(args, 'command', None)}', "
